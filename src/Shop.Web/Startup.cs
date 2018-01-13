@@ -39,7 +39,6 @@ namespace Shop.Web
             }
 
             app.UseStaticFiles();
-
             app.UseMyMiddleware();
             app.UseMvc(routes =>
             {
