@@ -10,6 +10,7 @@ namespace Shop.Core.Domain
         public string Name { get; }
         public string Category { get; set; }
         public decimal Price { get; }
+        public Guid Id { get; set; }
 
         public Product(string name, string category, decimal price)
         {

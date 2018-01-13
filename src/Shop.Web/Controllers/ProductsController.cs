@@ -18,22 +18,42 @@ namespace Shop.Web.Controllers
             new Product("Jeans", "Trousers", 150),
             new Product("Hammer", "Tools", 47)
         };
+        //private IProductRespository _productRepository;
+        //public Guid Is = Guid.NewGuid();
+
+        //    public object Name { get; private set; }
+        //   public object Category { get; private set; }
+        //    public object Price { get; private set; }
+
+        //public ProductsController(IProductRespository productRespository)
+        //{
+        //    _productRepository = productRespository;
+        //}
 
         [HttpGet]
         public IActionResult Index()
         {
-            return View(_products);
+            var products = _products.Select(p => new ProductViewModel
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Category = p.Category,
+                Price = p.Price
+            });
+
+
+            return View(products);
         }
 
         [HttpGet("add")]
         public IActionResult Add()
         {
-            var viewModel = new ProductViewModel();
+            var viewModel = new AddProductViewModel();
             return View(viewModel);
         }
 
         [HttpPost("add")]
-        public IActionResult Add(ProductViewModel viewModel)
+        public IActionResult Add(AddProductViewModel viewModel)
         {
             if (!ModelState.IsValid)
             {

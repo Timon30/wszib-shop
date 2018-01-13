@@ -9,6 +9,8 @@ namespace Shop.Web.Models
 {
     public class ProductViewModel
     {
+        public Guid Id { get; set; }
+
         [Requiced(ErrorMessage = "Name was not provided.")]
         [StringLength(100, MinimumLength = 3)]
         public string Name { get; set; }
