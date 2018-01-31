@@ -1,65 +1,89 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Shop.Core.DTO;
+using Shop.Core.Services;
+using Shop.Web.Framework;
+using Shop.Web.Models;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Shop.Core.Domain;
-using Shop.Web.Models;
 
 namespace Shop.Web.Controllers
 {
     [Route("products")]
+    [CookieAuth("require-admin")]
     public class ProductsController : Controller
     {
+        private readonly IProductService _productService;
+        private readonly IServiceClient _serviceClient;
 
-        private static readonly List<Product> _products = new List<Product>
+        public ProductsController(IProductService productService,
+            IServiceClient serviceClient)
         {
-            new Product("Laptop", "Electronics", 3000),
-            new Product("Jeans", "Trousers", 150),
-            new Product("Hammer", "Tools", 47)
-        };
-        //private IProductRespository _productRepository;
-        //public Guid Is = Guid.NewGuid();
-
-        //    public object Name { get; private set; }
-        //   public object Category { get; private set; }
-        //    public object Price { get; private set; }
-
-        //public ProductsController(IProductRespository productRespository)
-        //{
-        //    _productRepository = productRespository;
-        //}
+            _productService = productService;
+            _serviceClient = serviceClient;
+        }
 
         [HttpGet]
-        public IActionResult Index()
+        [AllowAnonymous]
+        public async Task<IActionResult> Index()
         {
-            var products = _products.Select(p => new ProductViewModel
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Category = p.Category,
-                Price = p.Price
-            });
+            //var products = _productService
+            //    .GetAll()
+            //    .Select(p => new ProductViewModel(p));
+            var products = await _serviceClient.GetProductsAsync();
+            var viewModels = products.Select(p => new ProductViewModel(p));
 
-
-            return View(products);
+            return View(viewModels);
         }
 
         [HttpGet("add")]
         public IActionResult Add()
         {
-            var viewModel = new AddProductViewModel();
+            var viewModel = new AddOrUpdateProductViewModel();
+
             return View(viewModel);
         }
 
         [HttpPost("add")]
-        public IActionResult Add(AddProductViewModel viewModel)
+        public async Task<IActionResult> Add(AddOrUpdateProductViewModel viewModel)
         {
             if (!ModelState.IsValid)
             {
                 return View(viewModel);
             }
-            _products.Add(new Product(viewModel.Name, viewModel.Category, viewModel.Price));
+            await _serviceClient.AddProductAsync(viewModel.Name, viewModel.Category, viewModel.Price);
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet("{id}/update")]
+        public IActionResult Update(Guid id)
+        {
+            var product = _productService.Get(id);
+            if (product == null)
+            {
+                return NotFound();
+            }
+            var viewModel = new AddOrUpdateProductViewModel(product);
+
+            return View(viewModel);
+        }
+
+        [HttpPost("{id}/update")]
+        public IActionResult Update(AddOrUpdateProductViewModel viewModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(viewModel);
+            }
+            _productService.Update(new ProductDto
+            {
+                Id = viewModel.Id,
+                Name = viewModel.Name,
+                Category = viewModel.Category,
+                Price = viewModel.Price
+            });
 
             return RedirectToAction(nameof(Index));
         }
